@@ -101,9 +101,12 @@ extension CheckoutView: WKScriptMessageHandler {
 			case .checkoutComplete:
 				CheckoutView.cache = nil
 				viewDelegate?.checkoutViewDidCompleteCheckout()
-			case .checkoutUnavailable:
+			case .checkoutUnavailable(let message):
 				CheckoutView.cache = nil
-				viewDelegate?.checkoutViewDidFailWithError(error: .checkoutUnavailable(message: "Checkout unavailable."))
+				viewDelegate?.checkoutViewDidFailWithError(error: .checkoutUnavailable(message: message))
+			case .checkoutExpired(let message):
+				CheckoutView.cache = nil
+				viewDelegate?.checkoutViewDidFailWithError(error: .checkoutExpired(message: message))
 			default:
 				()
 			}
@@ -143,9 +146,9 @@ extension CheckoutView: WKNavigationDelegate {
 			CheckoutView.cache = nil
 			switch response.statusCode {
 			case 404, 410:
-				viewDelegate?.checkoutViewDidFailWithError(error: .checkoutExpired(message: "Checkout has expired"))
+				viewDelegate?.checkoutViewDidFailWithError(error: .checkoutExpired(message: Constants.defaultCheckoutExpiredMsg))
 			case 500:
-				viewDelegate?.checkoutViewDidFailWithError(error: .checkoutUnavailable(message: "Checkout unavailable due to error"))
+				viewDelegate?.checkoutViewDidFailWithError(error: .checkoutUnavailable(message: Constants.defaultCheckoutUnavailableMsg))
 			default:
 				()
 			}

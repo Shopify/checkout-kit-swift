@@ -56,8 +56,8 @@ extension CheckoutBridge {
 	enum WebEvent: Decodable {
 		case checkoutComplete
 		case checkoutCanceled
-		case checkoutExpired
-		case checkoutUnavailable
+		case checkoutExpired(String)
+		case checkoutUnavailable(String)
 		case unsupported(String)
 
 		enum CodingKeys: String, CodingKey {
@@ -67,7 +67,6 @@ extension CheckoutBridge {
 
 		init(from decoder: Decoder) throws {
 			let container = try decoder.container(keyedBy: CodingKeys.self)
-
 			let name = try container.decode(String.self, forKey: .name)
 
 			switch name {
@@ -76,11 +75,71 @@ extension CheckoutBridge {
 			case "close":
 				self = .checkoutCanceled
 			case "error":
-				// needs to support .checkoutUnavailable by parsing error payload on body
-				self = .checkoutExpired
+				let errorPayloads = try container.decode([ErrorPayload].self, forKey: .body)
+				let errorMessage = errorPayloads.first?.reason ?? Constants.defaultCheckoutUnavailableMsg
+				guard let errorGroup = errorPayloads.first?.group else {
+					self = .checkoutUnavailable(errorMessage)
+					return
+				}
+
+				switch errorGroup {
+				case ErrorGroup.internal:
+					self = .checkoutExpired(Constants.defaultCheckoutExpiredMsg)
+				default:
+					self = .checkoutUnavailable(errorMessage)
+				}
 			default:
 				self = .unsupported(name)
 			}
 		}
 	}
+}
+
+class ErrorPayload: Decodable {
+	var flowType: FlowType
+	var group: ErrorGroup
+	var type: ErrorType
+	var code: String?
+	var reason: String?
+
+	init(flowType: FlowType, group: ErrorGroup, type: ErrorType, code: String? = nil, reason: String? = nil) {
+		self.flowType = flowType
+		self.group = group
+		self.type = type
+		self.code = code
+		self.reason = reason
+	}
+}
+
+enum FlowType: String, Decodable {
+	case regular
+	case shopPay
+	case shopPayLogin
+	case checkoutDefaults
+	case applePay
+	case googlePay
+	case payPal
+	case amazonPay
+	case facebookPay
+	case shopifyInstallments
+}
+
+enum ErrorGroup: String, Decodable {
+	case `internal`
+	case violation
+	case checkout
+	case vaultedPayment
+	case defaults
+	case authentication
+	case unrecoverable
+}
+
+enum ErrorType: String, Decodable {
+	case inventory
+	case payment
+	case other
+	case discount
+	case order
+	case customerPersistence
+	case checkoutBlocking
 }

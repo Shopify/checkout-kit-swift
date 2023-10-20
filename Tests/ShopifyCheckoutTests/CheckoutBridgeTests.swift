@@ -98,10 +98,42 @@ class CheckoutBridgeTests: XCTestCase {
 		}
 	}
 
+	func testDecodeSupportsCheckoutExpiredEvent() throws {
+		let mock = WKScriptMessageMock(body: """
+		{
+			"name": "error",
+			"body": [
+				{
+					"flowType": "regular",
+					"group": "internal",
+					"type": "other",
+					"code": "0",
+					"reason": "An error occurred"
+				}
+			]
+		}
+		""")
+
+		let result = try CheckoutBridge.decode(mock)
+
+		guard case CheckoutBridge.WebEvent.checkoutExpired = result else {
+			return XCTFail("expected CheckoutScriptMessage.checkoutExpired, got \(result)")
+		}
+	}
+
 	func testDecodeSupportsCheckoutUnavailableEvent() throws {
 		let mock = WKScriptMessageMock(body: """
 		{
-			"name": "error"
+			"name": "error",
+			"body": [
+				{
+					"flowType": "regular",
+					"group": "internal",
+					"type": "other",
+					"code": "0",
+					"reason": "An error occurred"
+				}
+			]
 		}
 		""")
 

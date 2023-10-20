@@ -37,3 +37,8 @@ public enum CheckoutError: Swift.Error {
 	/// In event of checkoutExpired, a new checkout url will need to be generated
 	case checkoutExpired(message: String)
 }
+
+enum Constants {
+	static let defaultCheckoutExpiredMsg = "Checkout expired. Checkout needs to be reinitialised"
+	static let defaultCheckoutUnavailableMsg = "Checkout unavailable due to error"
+}
