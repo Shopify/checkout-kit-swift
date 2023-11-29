@@ -29,10 +29,11 @@ class SettingsViewController: UITableViewController {
 	// MARK: Properties
 	enum Section: Int, CaseIterable {
 		case vaultedState = 0
-		case colorScheme = 1
-		case invalidateCache = 2
-		case version = 3
-		case logs = 4
+		case payButton = 1
+		case colorScheme = 2
+		case invalidateCache = 3
+		case version = 4
+		case logs = 5
 		case undefined = -1
 
 		static func from(_ rawValue: Int) -> Section {
@@ -41,6 +42,13 @@ class SettingsViewController: UITableViewController {
 	}
 
 	private var logs: [String?] = []
+
+	private lazy var payButtonSwitch: UISwitch = {
+		let view = UISwitch()
+		view.isOn = ShopifyCheckoutKit.configuration.payButton.enabled
+		view.addTarget(self, action: #selector(payButtonSwitchDidChange), for: .valueChanged)
+		return view
+	}()
 
 	private lazy var vaultedStateSwitch: UISwitch = {
 		let view = UISwitch()
@@ -101,7 +109,7 @@ class SettingsViewController: UITableViewController {
 
 	override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
 		switch Section.from(section) {
-		case Section.vaultedState, Section.version, Section.invalidateCache:
+		case Section.vaultedState, Section.version, Section.invalidateCache, Section.payButton:
 			return 1
 		case Section.colorScheme:
 			return ShopifyCheckoutKit.Configuration.ColorScheme.allCases.count
@@ -120,6 +128,10 @@ class SettingsViewController: UITableViewController {
 		case Section.vaultedState:
 			content.text = "Prefill buyer information"
 			cell.accessoryView = vaultedStateSwitch
+			cell.contentConfiguration = content
+		case Section.payButton:
+			content.text = "Render native pay button"
+			cell.accessoryView = payButtonSwitch
 			cell.contentConfiguration = content
 		case Section.colorScheme:
 			let scheme = colorScheme(at: indexPath)
@@ -164,13 +176,17 @@ class SettingsViewController: UITableViewController {
 		case Section.vaultedState:
 			vaultedStateSwitch.isOn.toggle()
 			vaultedStateSwitchDidChange()
+		case Section.payButton:
+			payButtonSwitch.isOn.toggle()
+			payButtonSwitchDidChange()
 		case Section.colorScheme:
 			let newColorScheme = colorScheme(at: indexPath)
 			ShopifyCheckoutKit.configuration.colorScheme = newColorScheme
 			ShopifyCheckoutKit.configuration.spinnerColor = newColorScheme.spinnerColor
 			ShopifyCheckoutKit.configuration.backgroundColor = newColorScheme.backgroundColor
+			ShopifyCheckoutKit.configuration.borderColor = newColorScheme.borderColor
 			view?.window?.overrideUserInterfaceStyle = newColorScheme.userInterfaceStyle
-            tableView.reloadSections(IndexSet(integer: Section.colorScheme.rawValue), with: .automatic)
+			tableView.reloadSections(IndexSet(integer: Section.colorScheme.rawValue), with: .automatic)
 		case Section.invalidateCache:
 			clearPreloadingCache()
 			tableView.deselectRow(at: indexPath, animated: true)
@@ -183,6 +199,10 @@ class SettingsViewController: UITableViewController {
 
 	@objc private func vaultedStateSwitchDidChange() {
 		appConfiguration.useVaultedState = vaultedStateSwitch.isOn
+	}
+
+	@objc private func payButtonSwitchDidChange() {
+		ShopifyCheckoutKit.configuration.payButton.enabled = payButtonSwitch.isOn
 	}
 
 	private func currentColorScheme() -> Configuration.ColorScheme {
@@ -261,6 +281,28 @@ extension Configuration.ColorScheme {
 			return UIColor(red: 0.18, green: 0.16, blue: 0.22, alpha: 1.00)
 		default:
 			return UIColor(red: 0.09, green: 0.45, blue: 0.69, alpha: 1.00)
+		}
+	}
+
+	var payButtonBackgroundColor: UIColor {
+		switch self {
+		case .web:
+			return UIColor(red: 0.94, green: 0.94, blue: 0.91, alpha: 1.00)
+		default:
+			return .systemBackground
+		}
+	}
+
+	var borderColor: UIColor {
+		switch self {
+		case .web:
+			return UIColor(red: 208/255, green: 208/255, blue: 205/255, alpha: 1.0)
+		case .light:
+			return UIColor(red: 222/255, green: 222/255, blue: 222/255, alpha: 1.0)
+		case .dark:
+			return UIColor(red: 68/255, green: 68/255, blue: 70/255, alpha: 1.0)
+		default:
+			return .systemGray5
 		}
 	}
 
