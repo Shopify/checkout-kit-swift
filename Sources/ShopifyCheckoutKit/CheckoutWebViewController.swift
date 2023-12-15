@@ -94,7 +94,32 @@ class CheckoutWebViewController: UIViewController, UIAdaptivePresentationControl
 		])
 		view.bringSubviewToFront(spinner)
 
+		if checkoutView.isLoading == false {
+			self.displayNativePayButton()
+		}
+
 		loadCheckout()
+	}
+
+	private func displayNativePayButton() {
+		let payButtonView = PayButtonView()
+		payButtonView.tag = 1337
+		payButtonView.translatesAutoresizingMaskIntoConstraints = false
+
+		view.addSubview(payButtonView)
+
+		NSLayoutConstraint.activate([
+			payButtonView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+			payButtonView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+			payButtonView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+		])
+
+		self.checkoutView.evaluateJavaScript("const style = document.createElement('style'); document.head.appendChild(style); style.appendChild(document.createTextNode('#checkout-sdk-pay-button-container { display: none !important; }'));")
+
+		payButtonView.buttonPressedAction = {
+			print("button pressed")
+			self.checkoutView.evaluateJavaScript("window.MobileCheckoutSdk.dispatchMessage('submitPayment');")
+		}
 	}
 
 	private func loadCheckout() {
@@ -132,6 +157,11 @@ extension CheckoutWebViewController: CheckoutWebViewDelegate {
 	func checkoutViewDidFinishNavigation() {
 		spinner.stopAnimating()
 		initialNavigation = false
+
+		if ShopifyCheckoutKit.configuration.payButton.enabled {
+			displayNativePayButton()
+		}
+
 		UIView.animate(withDuration: UINavigationController.hideShowBarDuration) { [weak checkoutView] in
 			checkoutView?.alpha = 1
 		}
@@ -140,6 +170,13 @@ extension CheckoutWebViewController: CheckoutWebViewDelegate {
 	func checkoutViewDidCompleteCheckout() {
 		ConfettiCannon.fire(in: view)
 		CheckoutWebView.invalidate()
+
+		if ShopifyCheckoutKit.configuration.payButton.enabled {
+			if let payButtonView = self.view.viewWithTag(1337) {
+				payButtonView.removeFromSuperview()
+			}
+		}
+
 		delegate?.checkoutDidComplete()
 	}
 

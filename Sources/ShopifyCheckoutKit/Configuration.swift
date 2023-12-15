@@ -37,9 +37,13 @@ public struct Configuration {
 
 	public var confetti = Configuration.Confetti()
 
+	public var payButton = Configuration.PayButton()
+
 	public var spinnerColor: UIColor = UIColor(red: 0.09, green: 0.45, blue: 0.69, alpha: 1.00)
 
 	public var backgroundColor: UIColor = .systemBackground
+
+	public var borderColor: UIColor = .systemGray5
 
 	public var logger: Logger = NoOpLogger()
 
@@ -64,6 +68,12 @@ extension Configuration {
 		public var enabled: Bool = false
 
 		public var particles = [UIImage]()
+	}
+}
+
+extension Configuration {
+	public struct PayButton {
+		public var enabled: Bool = true
 	}
 }
 

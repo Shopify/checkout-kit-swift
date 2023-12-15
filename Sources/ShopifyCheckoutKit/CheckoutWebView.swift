@@ -117,7 +117,7 @@ extension CheckoutWebView: WKScriptMessageHandler {
 				()
 			}
 		} catch {
-            viewDelegate?.checkoutViewDidFailWithError(error: .sdkError(underlying: error))
+			viewDelegate?.checkoutViewDidFailWithError(error: .sdkError(underlying: error))
 		}
 	}
 }
@@ -141,15 +141,15 @@ extension CheckoutWebView: WKNavigationDelegate {
 		decisionHandler(.allow)
 	}
 
-    func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse, decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
-        if let response = navigationResponse.response as? HTTPURLResponse {
-            decisionHandler(handleResponse(response))
-            return
-        }
-        decisionHandler(.allow)
-    }
+	func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse, decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
+		if let response = navigationResponse.response as? HTTPURLResponse {
+			decisionHandler(handleResponse(response))
+			return
+		}
+		decisionHandler(.allow)
+	}
 
-    func handleResponse(_ response: HTTPURLResponse) -> WKNavigationResponsePolicy {
+	func handleResponse(_ response: HTTPURLResponse) -> WKNavigationResponsePolicy {
 		if isCheckout(url: response.url) && response.statusCode >= 400 {
 			CheckoutWebView.cache = nil
 			switch response.statusCode {
@@ -216,7 +216,7 @@ extension CheckoutWebView: WKNavigationDelegate {
 		}
 		urlComponents.queryItems = urlComponents.queryItems?.filter { !($0.name == "open_externally") }
 		return urlComponents.url ?? url
-    }
+	}
 
 	private func isMailOrTelLink(_ url: URL) -> Bool {
 		return ["mailto", "tel"].contains(url.scheme)
